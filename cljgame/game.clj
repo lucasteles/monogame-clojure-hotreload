@@ -6,10 +6,9 @@
 
 (defn init [game { graphics :graphics-manager
                    window :window }]
-  (set! (.IsMouseVisible game) true)
-  (set! (.PreferredBackBufferWidth graphics) (g/int32 1024))
-  (set! (.PreferredBackBufferHeight graphics) (g/int32 768))
-  (.ApplyChanges graphics)
+  (g/set-mouse-visible game true)
+  (g/set-screen-size graphics {:width 1024 :height 768})
+  (g/apply-changes graphics)
 
   {:rotation 0
    :position  (g/vect (-> window g/width (/ 2))

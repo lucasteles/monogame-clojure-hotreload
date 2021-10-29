@@ -1,6 +1,6 @@
 (ns cljgame.monogame
-  (:import [System.IO Directory Path Directory]
-           [System.Linq Enumerable]))
+    (:import [System.IO Directory Path Directory]
+             [System.Linq Enumerable]))
 
 
 (import [Microsoft.Xna.Framework Game GraphicsDeviceManager Color Vector2 Rectangle GameWindow]
@@ -13,6 +13,14 @@
 (defn int32 [n] (Convert/ToInt32 n))
 (def get-prop (memoize (fn [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))))
 (def graphics-device (fn [game] (get-prop game "GraphicsDevice")))
+
+(defn set-mouse-visible [game value] (set! (.IsMouseVisible game) value))
+(defn apply-changes [graphics] (.ApplyChanges graphics))
+
+
+(defn set-screen-size [graphics {:keys [width height]}]
+  (set! (.PreferredBackBufferWidth graphics) (int32 width))
+  (set! (.PreferredBackBufferHeight graphics) (int32 height)))
 
 (defn exit [game] (.Exit game))
 
