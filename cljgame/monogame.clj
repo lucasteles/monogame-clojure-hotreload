@@ -1,5 +1,4 @@
 (ns cljgame.monogame
-  (:require [cljgame.interop :refer [current-exe-dir get-prop load-monogame]])
   (:import [System.IO Directory Path Directory]
            [System.Linq Enumerable]))
 
@@ -11,11 +10,9 @@
         [Microsoft.Xna.Framework.Audio SoundEffect]
         [Microsoft.Xna.Framework.Content ContentManager])
 
-
-(load-monogame)
-
+(defn int32 [n] (Convert/ToInt32 n))
+(def get-prop (memoize (fn [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))))
 (def graphics-device (fn [game] (get-prop game "GraphicsDevice")))
-
 
 (defn exit [game] (.Exit game))
 

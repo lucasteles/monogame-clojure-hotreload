@@ -1,23 +1,14 @@
 (ns cljgame.game
-  (:require [cljgame.interop :refer [current current-exe-dir int32 load-monogame]]
-            [cljgame.monogame :as g]
+  (:require [cljgame.monogame :as g]
             [cljgame.state :as state])
 
-  (:import [System Console]
-           [System.IO Path])
-  (:gen-class))
-
-(load-monogame)
-
-(import [Microsoft.Xna.Framework Color Vector2]
-        [Microsoft.Xna.Framework.Input Keyboard Keys]
-        [Microsoft.Xna.Framework.Graphics SpriteEffects])
+  (:import [System Console]))
 
 (defn init [game { graphics :graphics-manager
                    window :window }]
   (set! (.IsMouseVisible game) true)
-  (set! (.PreferredBackBufferWidth graphics) (int32 1024))
-  (set! (.PreferredBackBufferHeight graphics) (int32 768))
+  (set! (.PreferredBackBufferWidth graphics) (g/int32 1024))
+  (set! (.PreferredBackBufferHeight graphics) (g/int32 768))
   (.ApplyChanges graphics)
 
   {:rotation 0
@@ -57,7 +48,7 @@
               position :position } :state}]
   (let [logo-center (g/vect (-> logo .Bounds .Width (/ 2))
                             (-> logo .Bounds .Height (/ 2)))]
-    (g/clear graphics-device Color/LightGray)
+    (g/clear graphics-device :light-gray)
 
     (g/begin sprite-batch)
     (g/draw sprite-batch {:texture logo
@@ -71,9 +62,9 @@
                           :layer-depth 0})
     (g/end sprite-batch)))
 
-(Console/WriteLine "Ola Delboni")
 ;; called from C#
 (def Initialize (partial state/Initialize init))
 (def LoadContent (partial state/LoadContent load-content))
 (def Update (partial state/Update update-))
 (def Draw (partial state/Draw draw))
+(Console/WriteLine "Ola Delboni")
