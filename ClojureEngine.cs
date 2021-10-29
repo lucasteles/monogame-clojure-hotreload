@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -24,7 +26,7 @@ public class ClojureEngine : IDisposable
     Exception currentError;
     bool showedError,  forceReload;
 
-    private List<string> filesToReload = new ();
+    private ConcurrentBag<string> filesToReload = new ();
 
     public ClojureEngine(Game game, GraphicsDeviceManager graphics, SpriteBatch spriteBatch)
     {
@@ -159,8 +161,9 @@ public class ClojureEngine : IDisposable
 
     void UpdateCljFiles()
     {
-        var current = Directory.GetCurrentDirectory();
+        var current = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         var output = Path.Combine(current, "cljgame");
+        if (cljSrc == output) return;
         Directory.Delete(output, true);
         Directory.CreateDirectory(output);
         CopyFilesRecursively(cljSrc, output);
