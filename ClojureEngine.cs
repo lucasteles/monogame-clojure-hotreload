@@ -16,7 +16,6 @@ public class ClojureEngine : IDisposable
 
     SpriteFont errorFont;
     IFn cljInitialize, cljLoadContent, cljUpdate, cljDraw;
-
     string cljSrc;
 
     FileSystemWatcher watcher = new();
@@ -28,8 +27,8 @@ public class ClojureEngine : IDisposable
         this.game = game;
         this.graphics = graphics;
         this.spriteBatch = spriteBatch;
-        cljSrc = Path.Combine(GetProjectPath(), "clj");
-    //    ConfigureWatcher();
+        cljSrc = Path.Combine(GetProjectPath(), "cljgame");
+        ConfigureWatcher();
     }
 
     bool ShouldWait() => currentError is not null;
@@ -51,8 +50,6 @@ public class ClojureEngine : IDisposable
     {
         try
         {
-            var load = Clojure.var("clojure.core", "load");
-            load.invoke("/cljgame/game");
             LoadSymbols();
         }
         catch (Exception e)
@@ -63,6 +60,8 @@ public class ClojureEngine : IDisposable
 
     void LoadSymbols()
     {
+        var load = Clojure.var("clojure.core", "load");
+        load.invoke("/cljgame/game");
         IFn loadFn(string fnName) => Clojure.var("cljgame.game", fnName);
         cljInitialize = loadFn("Initialize");
         cljLoadContent = loadFn("LoadContent");
@@ -91,8 +90,9 @@ public class ClojureEngine : IDisposable
             Console.WriteLine("RELOAD FORCED");
             currentError = null;
             showedError = forceReload = false;
-            Initialize();
-            cljLoadContent?.invoke(game, gameTime);
+            UpdateCljFiles();
+            LoadSymbols();
+            LoadContent();
             return;
         }
 
@@ -122,6 +122,22 @@ public class ClojureEngine : IDisposable
         }
     }
 
+    static void CopyFilesRecursively(string sourcePath, string targetPath)
+    {
+        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+            Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+
+        foreach (var newPath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+            File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
+    }
+
+    void UpdateCljFiles()
+    {
+        var current = Directory.GetCurrentDirectory();
+        var output = Path.Combine(current, "cljgame");
+        Directory.Delete(output, true);
+        CopyFilesRecursively(cljSrc, output);
+    }
     void DrawErrorScreen()
     {
         var exn = currentError;
