@@ -24,9 +24,9 @@ public class ClojureEngine : IDisposable
     IFn load;
     FileSystemWatcher watcher = new();
     Exception currentError;
-    bool showedError,  forceReload;
+    bool showedError, forceReload;
 
-    private ConcurrentBag<string> filesToReload = new ();
+    private ConcurrentBag<string> filesToReload = new();
 
     public ClojureEngine(Game game, GraphicsDeviceManager graphics, SpriteBatch spriteBatch)
     {
@@ -39,6 +39,7 @@ public class ClojureEngine : IDisposable
     }
 
     bool ShouldWait() => currentError is not null;
+
     void ConfigureWatcher()
     {
         watcher.Filter = "*.*";
@@ -78,15 +79,15 @@ public class ClojureEngine : IDisposable
         cljLoadContent = loadFn("LoadContent");
         cljUpdate = loadFn("Update");
         cljDraw = loadFn("Draw");
-        cljInitialize?.invoke(game,spriteBatch, graphics, game.GraphicsDevice, game.Window);
+        cljInitialize?.invoke(game, spriteBatch, graphics, game.GraphicsDevice, game.Window);
     }
+
     public void LoadContent()
     {
         errorFont = game.Content.Load<SpriteFont>("arialfont");
         try
         {
             cljLoadContent?.invoke(game);
-
         }
         catch (Exception e)
         {
@@ -96,21 +97,21 @@ public class ClojureEngine : IDisposable
 
     public void Update(GameTime gameTime)
     {
-        if (forceReload)
-        {
-            Console.WriteLine("Reloading game...");
-            currentError = null;
-            showedError = forceReload = false;
-            UpdateCljFiles();
-            ReloadChangedFiles();
-            LoadSymbols();
-            LoadContent();
-            return;
-        }
-
-        if (ShouldWait()) return;
         try
         {
+            if (forceReload)
+            {
+                Console.WriteLine("Reloading game...");
+                currentError = null;
+                showedError = forceReload = false;
+                UpdateCljFiles();
+                ReloadChangedFiles();
+                LoadSymbols();
+                LoadContent();
+                return;
+            }
+
+            if (ShouldWait()) return;
             cljUpdate?.invoke(game, gameTime);
         }
         catch (Exception e)
@@ -155,7 +156,7 @@ public class ClojureEngine : IDisposable
         foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
             Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
 
-        foreach (var newPath in Directory.GetFiles(sourcePath, "*.*",SearchOption.AllDirectories))
+        foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
     }
 
@@ -168,6 +169,7 @@ public class ClojureEngine : IDisposable
         Directory.CreateDirectory(output);
         CopyFilesRecursively(cljSrc, output);
     }
+
     void DrawErrorScreen()
     {
         var exn = currentError;
@@ -181,16 +183,19 @@ public class ClojureEngine : IDisposable
         {
             Console.WriteLine(exn);
             showedError = true;
+            try { spriteBatch.End(); } catch{}
         }
+
         var error =
             string.Join("\n",
-                exStr.Select((c, index) => new {c, index})
-                    .GroupBy(x => x.index/100)
+                exStr.Select((c, index) => new { c, index })
+                    .GroupBy(x => x.index / 100)
                     .Select(group => group.Select(elem => elem.c))
                     .Select(chars => new string(chars.ToArray())));
 
         spriteBatch.Begin();
         spriteBatch.DrawString(errorFont, error, Vector2.Zero, Color.White);
+
         spriteBatch.End();
     }
 
@@ -212,10 +217,3 @@ public class ClojureEngine : IDisposable
         watcher.Renamed -= WatcherHandler;
     }
 }
-
-
-
-
-
-
-
