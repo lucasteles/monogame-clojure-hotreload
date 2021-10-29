@@ -1,75 +1,73 @@
 (ns cljgame.game
   (:require [cljgame.monogame :as g]
-            [cljgame.state :as state])
-
+            [cljgame.state :as state]
+            [cljgame.physics :as physics]
+            [cljgame.entities.floor :as floor]
+            [cljgame.entities.pipes :as pipes]
+            [cljgame.entities.bird :as bird]
+            [cljgame.entities.score :as score]
+            [cljgame.entities.gameover :as gameover]
+            [cljgame.entities.background :as background])
   (:import [System Console]))
 
-(defn init [game { graphics :graphics-manager
-                   window :window }]
+(defn game-configuration! [game graphics]
   (g/set-mouse-visible game true)
   (g/set-screen-size graphics {:width 1024 :height 768})
-  (g/apply-changes graphics)
+  (g/apply-changes graphics))
 
-  {:rotation 0
-   :position  (g/vect (-> window g/width (/ 2))
-                      (-> window g/height (/ 2))) })
+(defn exit-on-esc [game keyboard-state]
+  (when (g/is-key-dowm keyboard-state :escape)
+        (g/exit game)))
 
-(defn read-keys [game]
-  (let [keyboard (g/keyboard-state)
-        pressed (fn [k] (g/is-key-dowm keyboard k))]
-    (cond 
-      (and (pressed :w) (pressed :a)) (g/vect -2 -2)
-      (and (pressed :w) (pressed :d)) (g/vect 2 -2)
-      (and (pressed :s) (pressed :a)) (g/vect -2 2)
-      (and (pressed :s) (pressed :d)) (g/vect 2 2)
-      (pressed :w) (g/vect 0 -2)
-      (pressed :s) (g/vect 0 2)
-      (pressed :a) (g/vect -2 0)
-      (pressed :d) (g/vect 2 0)
-      (pressed :escape) (g/exit game)
-      :else g/vect-0)))
+(defn handle-pause [state keyboard-state]
+  (if (g/is-key-dowm keyboard-state :space)
+    (assoc state :paused false) state))
 
-(defn load-content [game {state :state}]
-  (assoc state
-         :texture/logo (g/load-texture-2d game "logo")
-         :font/zorque (g/load-sprite-font game "zorque")))
+(defn initialize [game { graphics :graphics-manager window :window  update-state! :update-state!  }]
+  (let [world (physics/create-world (g/vect 0 20))]
+    (game-configuration! game graphics)
 
-(defn update- [{:keys [game game-time state]}]
-  (let [{rot :rotation position :position} state
-        velocity (read-keys game)]
-    (assoc state
-           :rotation (+ rot 0.01) 
-           :position (g/vect+ position velocity))))
+    {:world world
+     :floor (floor/init game window world)
+     :background (background/init game window)
+     :bird (bird/init game world update-state!)
+     :pipe-manager (pipes/init game)
+     :score (score/init game window)
+     :game-over (gameover/init)
+     :paused true}))
 
-(defn draw [{:keys [sprite-batch delta-time graphics-device]
-             {logo :texture/logo
-              font :font/zorque
-              rotation :rotation
-              position :position } :state}]
-  (let [logo-center (g/vect (-> logo .Bounds .Width (/ 2))
-                            (-> logo .Bounds .Height (/ 2)))]
-    (g/clear graphics-device :light-gray)
+(defn update- [{:keys [delta-time state game window]
+                {world :world paused :paused { gameover :is-game-over } :game-over} :state}]
+  (let [keyboard (g/keyboard-state)]
+    (exit-on-esc game keyboard)
 
-    (g/begin sprite-batch)
-    (g/draw sprite-batch {:texture logo
-                          :position position
-                          :source-rectangle (.Bounds logo)
-                          :color :white
-                          :rotation rotation
-                          :origin logo-center
-                          :scale 0.5
-                          :effects :none
-                          :layer-depth 0})
-    (g/draw-text sprite-batch
-                    {:sprite-font font
-                     :text "Hello from Clojure"
-                     :position (g/vect 10 10)
-                     :color :dark-green})
-    (g/end sprite-batch)))
+    (if paused
+      (handle-pause state keyboard)
+
+      (do
+        (physics/step world delta-time)
+        (-> state
+            (update :background background/update- delta-time)
+            (update :floor floor/update- delta-time)
+            (gameover/update- world delta-time)
+            (update :bird bird/update- keyboard gameover delta-time)
+            (pipes/update- window world delta-time))))))
+
+(defn draw [{:keys [sprite-batch graphics-device]
+             {:keys [floor background pipe-manager bird score] } :state}]
+  (g/clear graphics-device :light-gray)
+  (g/begin sprite-batch)
+
+  (background/draw sprite-batch background)
+  (pipes/draw sprite-batch pipe-manager)
+  (floor/draw sprite-batch floor)
+  (bird/draw sprite-batch bird)
+  (score/draw sprite-batch score)
+  (g/end sprite-batch))
 
 ;; called from C#
-(def Initialize (partial state/Initialize init))
-(def LoadContent (partial state/LoadContent load-content))
+(def Initialize (partial state/Initialize initialize))
+(def LoadContent (partial state/LoadContent (constantly nil)))
 (def Update (partial state/Update update-))
 (def Draw (partial state/Draw draw))
 (Console/WriteLine "Ola Delboni")

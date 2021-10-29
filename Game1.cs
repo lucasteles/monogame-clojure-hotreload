@@ -2,7 +2,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-
+using tainicom.Aether.Physics2D.Dynamics;
+using tainicom.Aether.Physics2D;
 public class Game1 : Game
 {
     GraphicsDeviceManager graphics;
