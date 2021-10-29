@@ -4,10 +4,13 @@
 
 (defn Initialize [initialize-fn game sprite-batch graphics-manager graphics-device window]
   (swap! props merge
-      {:sprite-batch sprite-batch
-       :graphics-manager graphics-manager
-       :graphics-device graphics-device
-       :window window})
+         {:sprite-batch sprite-batch
+          :graphics-manager graphics-manager
+          :graphics-device graphics-device
+          :window window
+          :update-state! (fn [state-fn]
+                           (swap! props assoc :forced true)
+                           (swap! props update :state state-fn))})
   (let [state (initialize-fn game @props)]
     (when state (swap! props assoc :state state))))
 
@@ -26,7 +29,9 @@
                               :window (:window props')
                               :graphics-manager (:graphics-manager props')})]
     (when (not (identical? state new-state))
-          (swap! props assoc :state new-state))))
+          (if (:forced @props)
+            (swap! props assoc :forced false)
+            (swap! props assoc :state new-state)))))
 
 (defn Draw [draw-fn game game-time]
   (let [props' @props]
