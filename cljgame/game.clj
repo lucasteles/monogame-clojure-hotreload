@@ -62,7 +62,7 @@
                           :layer-depth 0})
     (g/draw-text sprite-batch
                     {:sprite-font font
-                     :text "Hello from Clojure"
+                     :text "Hello from Clojure!"
                      :position (g/vect 10 10)
                      :color :dark-green})
     (g/end sprite-batch)))
