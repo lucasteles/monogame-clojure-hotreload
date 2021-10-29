@@ -136,6 +136,7 @@ public class ClojureEngine : IDisposable
         var current = Directory.GetCurrentDirectory();
         var output = Path.Combine(current, "cljgame");
         Directory.Delete(output, true);
+        Directory.CreateDirectory(output);
         CopyFilesRecursively(cljSrc, output);
     }
     void DrawErrorScreen()
