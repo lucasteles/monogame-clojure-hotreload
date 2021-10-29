@@ -32,8 +32,8 @@
 
 (defn load-content [game {state :state}]
   (assoc state
-         :texture/logo
-         (g/load-texture-2d game "logo")))
+         :texture/logo (g/load-texture-2d game "logo")
+         :font/zorque (g/load-sprite-font game "zorque")))
 
 (defn update- [{:keys [game game-time state]}]
   (let [{rot :rotation position :position} state
@@ -43,7 +43,8 @@
            :position (g/vect+ position velocity))))
 
 (defn draw [{:keys [sprite-batch delta-time graphics-device]
-             { logo :texture/logo
+             {logo :texture/logo
+              font :font/zorque
               rotation :rotation
               position :position } :state}]
   (let [logo-center (g/vect (-> logo .Bounds .Width (/ 2))
@@ -60,6 +61,11 @@
                           :scale 0.5
                           :effects :none
                           :layer-depth 0})
+    (g/draw-text sprite-batch
+                    {:sprite-font font
+                     :text "Hello from clojure"
+                     :position (g/vect 10 10)
+                     :color :dark-green})
     (g/end sprite-batch)))
 
 ;; called from C#

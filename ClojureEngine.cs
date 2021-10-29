@@ -53,13 +53,7 @@ public class ClojureEngine : IDisposable
         {
             var load = Clojure.var("clojure.core", "load");
             load.invoke("/cljgame/game");
-            IFn loadFn(string fnName) => Clojure.var("cljgame.game", fnName);
-
-            cljInitialize = loadFn("Initialize");
-            cljLoadContent = loadFn("LoadContent");
-            cljUpdate = loadFn("Update");
-            cljDraw = loadFn("Draw");
-            cljInitialize?.invoke(game,spriteBatch, graphics, game.GraphicsDevice, game.Window);
+            LoadSymbols();
         }
         catch (Exception e)
         {
@@ -67,6 +61,15 @@ public class ClojureEngine : IDisposable
         }
     }
 
+    void LoadSymbols()
+    {
+        IFn loadFn(string fnName) => Clojure.var("cljgame.game", fnName);
+        cljInitialize = loadFn("Initialize");
+        cljLoadContent = loadFn("LoadContent");
+        cljUpdate = loadFn("Update");
+        cljDraw = loadFn("Draw");
+        cljInitialize?.invoke(game,spriteBatch, graphics, game.GraphicsDevice, game.Window);
+    }
     public void LoadContent()
     {
         errorFont = game.Content.Load<SpriteFont>("arialfont");
