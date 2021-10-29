@@ -14,6 +14,14 @@
 (def get-prop (memoize (fn [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))))
 (def graphics-device (fn [game] (get-prop game "GraphicsDevice")))
 
+(defn set-mouse-visible [game value] (set! (.IsMouseVisible game) value))
+(defn apply-changes [graphics] (.ApplyChanges graphics))
+
+
+(defn set-screen-size [graphics {:keys [width height]}]
+  (set! (.PreferredBackBufferWidth graphics) (int32 width))
+  (set! (.PreferredBackBufferHeight graphics) (int32 height)))
+
 (defn exit [game] (.Exit game))
 
 (defn begin [sprite-batch &{:keys [sort-mode blend-state sampler-state depthStencil-state rasterizer-state effect transform-matrix]}]

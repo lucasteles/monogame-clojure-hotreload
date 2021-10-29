@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -18,9 +19,12 @@ public class ClojureEngine : IDisposable
     IFn cljInitialize, cljLoadContent, cljUpdate, cljDraw;
     string cljSrc;
 
+    IFn load;
     FileSystemWatcher watcher = new();
     Exception currentError;
     bool showedError,  forceReload;
+
+    private List<string> filesToReload = new ();
 
     public ClojureEngine(Game game, GraphicsDeviceManager graphics, SpriteBatch spriteBatch)
     {
@@ -29,6 +33,7 @@ public class ClojureEngine : IDisposable
         this.spriteBatch = spriteBatch;
         cljSrc = Path.Combine(GetProjectPath(), "cljgame");
         ConfigureWatcher();
+        load = Clojure.var("clojure.core", "load");
     }
 
     bool ShouldWait() => currentError is not null;
@@ -36,6 +41,7 @@ public class ClojureEngine : IDisposable
     {
         watcher.Filter = "*.*";
         watcher.Path = cljSrc;
+        watcher.IncludeSubdirectories = true;
         watcher.EnableRaisingEvents = true;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
         watcher.Created += WatcherHandler;
@@ -44,7 +50,11 @@ public class ClojureEngine : IDisposable
         watcher.Changed += WatcherHandler;
     }
 
-    void WatcherHandler(object sender, FileSystemEventArgs e) => forceReload = true;
+    void WatcherHandler(object sender, FileSystemEventArgs e)
+    {
+        filesToReload.Add(e.Name);
+        forceReload = true;
+    }
 
     public void Initialize()
     {
@@ -60,7 +70,6 @@ public class ClojureEngine : IDisposable
 
     void LoadSymbols()
     {
-        var load = Clojure.var("clojure.core", "load");
         load.invoke("/cljgame/game");
         IFn loadFn(string fnName) => Clojure.var("cljgame.game", fnName);
         cljInitialize = loadFn("Initialize");
@@ -87,10 +96,11 @@ public class ClojureEngine : IDisposable
     {
         if (forceReload)
         {
-            Console.WriteLine("RELOAD FORCED");
+            Console.WriteLine("Reloading game...");
             currentError = null;
             showedError = forceReload = false;
             UpdateCljFiles();
+            ReloadChangedFiles();
             LoadSymbols();
             LoadContent();
             return;
@@ -105,6 +115,22 @@ public class ClojureEngine : IDisposable
         {
             currentError = e;
         }
+    }
+
+    private void ReloadChangedFiles()
+    {
+        string clearFilePath(string filepath) =>
+            Path.Combine(Path.GetDirectoryName(filepath) ?? string.Empty,
+                Path.GetFileNameWithoutExtension(filepath));
+
+        foreach (var file in filesToReload.Select(clearFilePath).Distinct())
+        {
+            var name = Path.Combine("/cljgame", file);
+            Console.WriteLine($"Reloading {name}");
+            load.invoke(name);
+        }
+
+        filesToReload.Clear();
     }
 
     public void Draw(GameTime gameTime)
