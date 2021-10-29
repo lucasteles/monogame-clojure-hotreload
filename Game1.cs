@@ -14,6 +14,7 @@ public class Game1 : Game
     {
         graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
+        _ = new Body(); // loads the assembly to be used inside clj
     }
 
     protected override void Initialize()

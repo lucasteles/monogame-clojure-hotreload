@@ -1,6 +1,5 @@
 (ns cljgame.physics
   (:import [System Math]))
-(assembly-load-from "Aether.Physics2D.dll")
 (import [tainicom.Aether.Physics2D.Dynamics World BodyType Body Fixture]
         [tainicom.Aether.Physics2D.Dynamics.Contacts Contact]
         [Microsoft.Xna.Framework Color Vector2 Rectangle])
