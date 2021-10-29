@@ -3,13 +3,11 @@
 (def props (atom {:state {}}))
 
 (defn Initialize [initialize-fn game sprite-batch graphics-manager graphics-device window]
-  (println "init")
   (swap! props merge
       {:sprite-batch sprite-batch
        :graphics-manager graphics-manager
        :graphics-device graphics-device
        :window window})
-  (println "state" @props)
   (let [state (initialize-fn game @props)]
     (when state (swap! props assoc :state state))))
 

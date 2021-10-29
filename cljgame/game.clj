@@ -15,7 +15,6 @@
 
 (defn init [game { graphics :graphics-manager
                    window :window }]
-  (println "init in" game window)
   (set! (.IsMouseVisible game) true)
   (set! (.PreferredBackBufferWidth graphics) (int32 1024))
   (set! (.PreferredBackBufferHeight graphics) (int32 768))
@@ -26,19 +25,19 @@
                       (-> window g/height (/ 2))) })
 
 (defn read-keys [game]
-  (let [keyboard (Keyboard/GetState)
-        pressed (fn [k] (.IsKeyDown keyboard k))]
+  (let [keyboard (g/keyboard-state)
+        pressed (fn [k] (g/is-key-dowm keyboard k))]
     (cond 
-      (and (pressed Keys/W) (pressed Keys/A)) (g/vect -2 -2)
-      (and (pressed Keys/W) (pressed Keys/D)) (g/vect 2 -2)
-      (and (pressed Keys/S) (pressed Keys/A)) (g/vect -2 2)
-      (and (pressed Keys/S) (pressed Keys/D)) (g/vect 2 2)
-      (pressed Keys/W) (g/vect 0 -2)
-      (pressed Keys/S) (g/vect 0 2)
-      (pressed Keys/A) (g/vect -2 0)
-      (pressed Keys/D) (g/vect 2 0)
-      (pressed Keys/Escape (g/exit game))
-      :else Vector2/Zero)))
+      (and (pressed :w) (pressed :a)) (g/vect -2 -2)
+      (and (pressed :w) (pressed :d)) (g/vect 2 -2)
+      (and (pressed :s) (pressed :a)) (g/vect -2 2)
+      (and (pressed :s) (pressed :d)) (g/vect 2 2)
+      (pressed :w) (g/vect 0 -2)
+      (pressed :s) (g/vect 0 2)
+      (pressed :a) (g/vect -2 0)
+      (pressed :d) (g/vect 2 0)
+      (pressed :escape) (g/exit game)
+      :else g/vect-0)))
 
 (defn load-content [game {state :state}]
   (assoc state
@@ -47,7 +46,7 @@
 
 (defn update- [{:keys [game game-time state]}]
   (let [{rot :rotation position :position} state
-        velocity (read-keys)]
+        velocity (read-keys game)]
     (assoc state
            :rotation (+ rot 0.01) 
            :position (g/vect+ position velocity))))
@@ -64,16 +63,15 @@
     (g/draw sprite-batch {:texture logo
                           :position position
                           :source-rectangle (.Bounds logo)
-                          :color Color/White
+                          :color :white
                           :rotation rotation
                           :origin logo-center
                           :scale 0.5
-                          :effects SpriteEffects/None
+                          :effects :none
                           :layer-depth 0})
     (g/end sprite-batch)))
 
 (Console/WriteLine "Ola Delboni")
-(println "Monogame on Clojure")
 ;; called from C#
 (def Initialize (partial state/Initialize init))
 (def LoadContent (partial state/LoadContent load-content))
