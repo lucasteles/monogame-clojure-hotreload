@@ -1,5 +1,7 @@
 # Monogame with Clojure
 
+[Demo](https://youtu.be/iNsegRYTJfM)
+
 ## Requirements
 
 - `dotnet sdk 5.0`
