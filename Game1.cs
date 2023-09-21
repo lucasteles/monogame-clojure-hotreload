@@ -1,10 +1,8 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using tainicom.Aether.Physics2D.Dynamics;
-using tainicom.Aether.Physics2D;
-public class Game1 : Game
+
+public sealed class Game1 : Game
 {
     GraphicsDeviceManager graphics;
     SpriteBatch spriteBatch;
@@ -12,7 +10,7 @@ public class Game1 : Game
 
     public Game1()
     {
-        graphics = new GraphicsDeviceManager(this);
+        graphics = new(this);
         Content.RootDirectory = "Content";
         _ = new Body(); // loads the assembly to be used inside clj
     }

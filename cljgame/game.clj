@@ -70,4 +70,4 @@
 (def LoadContent (partial state/LoadContent (constantly nil)))
 (def Update (partial state/Update update-))
 (def Draw (partial state/Draw draw))
-(Console/WriteLine "Ola Delboni")
+(println "Hi Delboni")
