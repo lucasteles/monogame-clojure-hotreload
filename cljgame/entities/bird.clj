@@ -6,7 +6,7 @@
 (def scale 0.8)
 (def jump-force (g/vect 0 -7))
 (def animation-duration 0.25)
-(def start-position (g/vect 301 350))
+(def start-position (g/vect 300 350))
 
 (defn on-hit-event [hit-sound update-state! sender other contact]
   (g/play hit-sound)
