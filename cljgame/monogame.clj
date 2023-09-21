@@ -1,7 +1,6 @@
 (ns cljgame.monogame
-  (:import [System.IO Directory Path Directory]
-           [System.Linq Enumerable]))
-
+    (:import [System.IO Directory Path]
+             [System.Linq Enumerable]))
 
 (import [Microsoft.Xna.Framework Game GraphicsDeviceManager Color Vector2 Rectangle GameWindow]
         [Microsoft.Xna.Framework.Graphics SpriteBatch Texture2D SpriteSortMode SpriteEffects SpriteFont]
@@ -11,12 +10,12 @@
         [Microsoft.Xna.Framework.Content ContentManager])
 
 (defn int32 [n] (Convert/ToInt32 n))
-(def get-prop (memoize (fn [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))))
-(def graphics-device (fn [game] (get-prop game "GraphicsDevice")))
+(defn get-prop [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))
 
+(def graphics-device (memoize (fn [game] (get-prop game "GraphicsDevice"))))
+(def content-manager (memoize (fn [game] (get-prop game "Content"))))
 (defn set-mouse-visible [game value] (set! (.IsMouseVisible game) value))
 (defn apply-changes [graphics] (.ApplyChanges graphics))
-
 
 (defn set-screen-size [graphics {:keys [width height]}]
   (set! (.PreferredBackBufferWidth graphics) (int32 width))
@@ -37,15 +36,15 @@
 (defn end [sprite-batch] (.End sprite-batch))
 
 (defn load-texture-2d [game texture-name]
-  (let [content (get-prop game "Content")]
+  (let [content (content-manager game)]
     (.Load ^ContentManager content (type-args Texture2D) texture-name)))
 
 (defn load-sprite-font [game font-name]
-  (let [content (get-prop game "Content")]
+  (let [content (content-manager game)]
     (.Load ^ContentManager content (type-args SpriteFont) font-name)))
 
 (defn load-sound-effect [game sound]
-  (let [content (get-prop game "Content")]
+  (let [content (content-manager game)]
     (.Load ^ContentManager content (type-args SoundEffect) sound)))
 
 (defn sound-effect-instance [^SoundEffect sound-effect]
@@ -53,7 +52,7 @@
 (defn play [sound] (.Play sound))
 
 (defn load-song [game song]
-  (let [content (get-prop game "Content")]
+  (let [content (content-manager game)]
     (.Load ^ContentManager content (type-args Song) song)))
 
 (defn vect

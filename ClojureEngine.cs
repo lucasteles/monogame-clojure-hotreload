@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using clojure.lang;
 using clojure.clr.api;
 
-public class ClojureEngine : IDisposable
+public sealed class ClojureEngine : IDisposable
 {
     readonly Game game;
     readonly GraphicsDeviceManager graphics;
@@ -21,19 +18,22 @@ public class ClojureEngine : IDisposable
     IFn cljInitialize, cljLoadContent, cljUpdate, cljDraw;
     string cljSrc;
 
-    IFn load;
-    FileSystemWatcher watcher = new();
-    Exception currentError;
-    bool showedError, forceReload;
+    readonly IFn load;
+    readonly FileSystemWatcher watcher = new();
+    readonly ConcurrentBag<string> filesToReload = new();
 
-    private ConcurrentBag<string> filesToReload = new();
+    bool errorShowed, forceReload;
+    Exception currentError;
+
+
+    const string ScriptDir = "cljgame";
 
     public ClojureEngine(Game game, GraphicsDeviceManager graphics, SpriteBatch spriteBatch)
     {
         this.game = game;
         this.graphics = graphics;
         this.spriteBatch = spriteBatch;
-        cljSrc = Path.Combine(GetProjectPath(), "cljgame");
+        cljSrc = Path.Combine(GetProjectPath(), ScriptDir);
         ConfigureWatcher();
         load = Clojure.var("clojure.core", "load");
     }
@@ -55,6 +55,10 @@ public class ClojureEngine : IDisposable
 
     void WatcherHandler(object sender, FileSystemEventArgs e)
     {
+        if (e.Name is null || File.GetAttributes(e.FullPath.TrimEnd('~'))
+                .HasFlag(FileAttributes.Directory))
+            return;
+
         filesToReload.Add(e.Name);
         forceReload = true;
     }
@@ -71,14 +75,15 @@ public class ClojureEngine : IDisposable
         }
     }
 
+    static IFn LoadFn(string fnName) => Clojure.var($"{ScriptDir}.game", fnName);
+
     void LoadSymbols()
     {
-        load.invoke("/cljgame/game");
-        IFn loadFn(string fnName) => Clojure.var("cljgame.game", fnName);
-        cljInitialize = loadFn("Initialize");
-        cljLoadContent = loadFn("LoadContent");
-        cljUpdate = loadFn("Update");
-        cljDraw = loadFn("Draw");
+        load.invoke($"/{ScriptDir}/game");
+        cljInitialize = LoadFn("Initialize");
+        cljLoadContent = LoadFn("LoadContent");
+        cljUpdate = LoadFn("Update");
+        cljDraw = LoadFn("Draw");
         cljInitialize?.invoke(game, spriteBatch, graphics, game.GraphicsDevice, game.Window);
     }
 
@@ -103,7 +108,7 @@ public class ClojureEngine : IDisposable
             {
                 Console.WriteLine("Reloading game...");
                 currentError = null;
-                showedError = forceReload = false;
+                errorShowed = forceReload = false;
                 UpdateCljFiles();
                 ReloadChangedFiles();
                 LoadSymbols();
@@ -120,13 +125,9 @@ public class ClojureEngine : IDisposable
         }
     }
 
-    private void ReloadChangedFiles()
+    void ReloadChangedFiles()
     {
-        string clearFilePath(string filepath) =>
-            Path.Combine(Path.GetDirectoryName(filepath) ?? string.Empty,
-                Path.GetFileNameWithoutExtension(filepath));
-
-        foreach (var file in filesToReload.Select(clearFilePath).Distinct())
+        foreach (var file in filesToReload.Select(ClearFilePath).Distinct())
         {
             var name = Path.Combine("/cljgame", file);
             Console.WriteLine($"Reloading {name}");
@@ -134,6 +135,11 @@ public class ClojureEngine : IDisposable
         }
 
         filesToReload.Clear();
+        return;
+
+        string ClearFilePath(string filepath) =>
+            Path.Combine(Path.GetDirectoryName(filepath) ?? string.Empty,
+                Path.GetFileNameWithoutExtension(filepath));
     }
 
     public void Draw(GameTime gameTime)
@@ -153,7 +159,8 @@ public class ClojureEngine : IDisposable
 
     static void CopyFilesRecursively(string sourcePath, string targetPath)
     {
-        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        foreach (var dirPath in Directory.GetDirectories(sourcePath, "*",
+                     SearchOption.AllDirectories))
             Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
 
         foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
@@ -162,8 +169,10 @@ public class ClojureEngine : IDisposable
 
     void UpdateCljFiles()
     {
-        var current = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        var output = Path.Combine(current, "cljgame");
+        var current = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                      ?? throw new InvalidOperationException("Null executing assembly location");
+
+        var output = Path.Combine(current, ScriptDir);
         if (cljSrc == output) return;
         Directory.Delete(output, true);
         Directory.CreateDirectory(output);
@@ -179,34 +188,41 @@ public class ClojureEngine : IDisposable
         game.GraphicsDevice.Clear(Color.Black);
 
         var exStr = $"{exn}\nInnerException:{exn.InnerException}";
-        if (!showedError)
+        if (!errorShowed)
         {
             Console.WriteLine(exn);
-            showedError = true;
-            try { spriteBatch.End(); } catch{}
+            errorShowed = true;
+            try
+            {
+                spriteBatch.End();
+            }
+            catch
+            {
+                // SKIP
+            }
         }
 
-        var error =
-            string.Join("\n",
-                exStr.Select((c, index) => new { c, index })
-                    .GroupBy(x => x.index / 100)
-                    .Select(group => group.Select(elem => elem.c))
-                    .Select(chars => new string(chars.ToArray())));
+        var error = string.Join('\n',
+            exStr.Select((c, index) => (c, index))
+                .GroupBy(x => x.index / 100)
+                .Select(group => group.Select(elem => elem.c))
+                .Select(chars => new string(chars.ToArray())));
 
         spriteBatch.Begin();
         spriteBatch.DrawString(errorFont, error, Vector2.Zero, Color.White);
-
         spriteBatch.End();
     }
 
-    string GetProjectPath(string path = null)
+    static string GetProjectPath(string path = null)
     {
-        if (string.IsNullOrWhiteSpace(path))
-            path = Directory.GetCurrentDirectory();
+        for (var i = 0; i < 100; i++)
+        {
+            if (string.IsNullOrWhiteSpace(path)) path = Directory.GetCurrentDirectory();
+            if (Directory.GetFiles(path, "*.csproj").Any()) return path;
+            path = Directory.GetParent(path)?.FullName;
+        }
 
-        return Directory.GetFiles(path, "*.csproj").Any()
-            ? path
-            : GetProjectPath(Directory.GetParent(path)?.FullName);
+        throw new InvalidOperationException("Unable to find project directory");
     }
 
     public void Dispose()
