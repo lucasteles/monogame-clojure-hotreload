@@ -18,12 +18,12 @@ public sealed class ClojureEngine : IDisposable
     IFn cljInitialize, cljLoadContent, cljUpdate, cljDraw;
     string cljSrc;
 
-    IFn load;
-    FileSystemWatcher watcher = new();
-    Exception currentError;
-    bool errorShowed, forceReload;
+    readonly IFn load;
+    readonly FileSystemWatcher watcher = new();
+    readonly ConcurrentBag<string> filesToReload = new();
 
-    ConcurrentBag<string> filesToReload = new();
+    bool errorShowed, forceReload;
+    Exception currentError;
 
     const string ScriptDir = "cljgame";
 
@@ -54,6 +54,10 @@ public sealed class ClojureEngine : IDisposable
 
     void WatcherHandler(object sender, FileSystemEventArgs e)
     {
+        if (e.Name is null || File.GetAttributes(e.FullPath.TrimEnd('~'))
+                .HasFlag(FileAttributes.Directory))
+            return;
+
         filesToReload.Add(e.Name);
         forceReload = true;
     }
@@ -124,7 +128,7 @@ public sealed class ClojureEngine : IDisposable
     {
         foreach (var file in filesToReload.Select(ClearFilePath).Distinct())
         {
-            var name = Path.Combine("/cljgame", file);
+            var name = Path.Combine($"/{ScriptDir}", file);
             Console.WriteLine($"Reloading {name}");
             load.invoke(name);
         }

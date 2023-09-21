@@ -2,7 +2,6 @@
     (:import [System.IO Directory Path]
              [System.Linq Enumerable]))
 
-
 (import [Microsoft.Xna.Framework Game GraphicsDeviceManager Color Vector2 Rectangle GameWindow]
         [Microsoft.Xna.Framework.Graphics SpriteBatch Texture2D SpriteSortMode SpriteEffects SpriteFont]
         [Microsoft.Xna.Framework.Input Keyboard Keys]
