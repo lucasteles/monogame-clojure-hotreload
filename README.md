@@ -1,17 +1,28 @@
 # Monogame with Clojure
 
+<<<<<<< Updated upstream
 ## Requirements
+=======
+[Demo](https://youtu.be/iNsegRYTJfM)
 
-- `dotnet sdk 5.0`
+> ⚠️ Each branch contains a different sample
+>>>>>>> Stashed changes
 
-## Running 
-Install and register the monogame tools:
-```bash
-dotnet tool install dotnet-mgcb-editor --global
-mgcb-editor --register
+## Build
+
+```
+dotnet tool restore
+dotnet build
+```
+
+## Run
+
+```
+dotnet run
 ```
 
 Compile and run:
+
 ```bash
 dotnet build
 dotnet run
