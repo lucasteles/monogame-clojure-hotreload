@@ -148,7 +148,7 @@
    :peach-puff Color/PeachPuff :peru Color/Peru :pink Color/Pink :plum Color/Plum :powder-blue Color/PowderBlue :purple Color/Purple
    :red Color/Red :rosy-brown Color/RosyBrown :royal-blue Color/RoyalBlue :saddle-brown Color/SaddleBrown :salmon Color/Salmon :sandy-brown Color/SandyBrown :sea-green Color/SeaGreen
    :sea-shell Color/SeaShell :sienna Color/Sienna :silver Color/Silver :sky-blue Color/SkyBlue :slate-blue Color/SlateBlue :slate-gray Color/SlateGray :snow Color/Snow :spring-green Color/SpringGreen
-   :steel-blue Color/SteelBlue :tan Color/Tan :teal Color/Teal :thistle Color/Thistle :tomato Color/Tomato :transparent Color/Transparent :transparent-black Color/TransparentBlack :turquoise Color/Turquoise
+   :steel-blue Color/SteelBlue :tan Color/Tan :teal Color/Teal :thistle Color/Thistle :tomato Color/Tomato :transparent Color/Transparent :turquoise Color/Turquoise
    :violet Color/Violet :wheat Color/Wheat :white Color/White :white-smoke Color/WhiteSmoke :yellow Color/Yellow :yellow-green Color/YellowGreen })
 
 (def sprite-effects-map {
