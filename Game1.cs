@@ -1,9 +1,7 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
-public class Game1 : Game
+public sealed class Game1 : Game
 {
     GraphicsDeviceManager graphics;
     SpriteBatch spriteBatch;
@@ -11,7 +9,7 @@ public class Game1 : Game
 
     public Game1()
     {
-        graphics = new GraphicsDeviceManager(this);
+        graphics = new(this);
         Content.RootDirectory = "Content";
     }
 
