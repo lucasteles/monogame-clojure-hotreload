@@ -1,12 +1,10 @@
 # Monogame with Clojure
 
-<<<<<<< Updated upstream
 ## Requirements
-=======
+
 [Demo](https://youtu.be/iNsegRYTJfM)
 
 > ⚠️ Each branch contains a different sample
->>>>>>> Stashed changes
 
 ## Build
 
