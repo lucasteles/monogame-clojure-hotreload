@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,11 +16,11 @@ public sealed class ClojureEngine : IDisposable
 
     SpriteFont errorFont;
     IFn cljInitialize, cljLoadContent, cljUpdate, cljDraw;
-    string cljSrc;
 
+    readonly string cljSrc;
     readonly IFn load;
     readonly FileSystemWatcher watcher = new();
-    readonly ConcurrentBag<string> filesToReload = new();
+    readonly HashSet<string> filesToReload = [];
 
     bool errorShowed, forceReload;
     Exception currentError;
@@ -32,7 +32,11 @@ public sealed class ClojureEngine : IDisposable
         this.game = game;
         this.graphics = graphics;
         this.spriteBatch = spriteBatch;
-        cljSrc = Path.Combine(GetProjectPath(), ScriptDir);
+#if DEBUG
+        cljSrc = Path.Combine(GetGameSourcePath(), ScriptDir);
+#else
+        cljSrc = ScriptDir;
+#endif
         ConfigureWatcher();
         load = Clojure.var("clojure.core", "load");
     }
@@ -58,8 +62,8 @@ public sealed class ClojureEngine : IDisposable
                 .HasFlag(FileAttributes.Directory))
             return;
 
-        filesToReload.Add(e.Name);
-        forceReload = true;
+        if (filesToReload.Add(e.Name))
+            forceReload = true;
     }
 
     public void Initialize()
@@ -126,19 +130,28 @@ public sealed class ClojureEngine : IDisposable
 
     void ReloadChangedFiles()
     {
-        foreach (var file in filesToReload.Select(ClearFilePath).Distinct())
+        foreach (var file in filesToReload)
         {
-            var name = Path.Combine($"/{ScriptDir}", file);
+            var filepath = Path.Combine(
+                Path.GetDirectoryName(file) ?? string.Empty,
+                Path.GetFileNameWithoutExtension(file)
+            );
+            var name = Path.Combine($"/{ScriptDir}", filepath);
             Console.WriteLine($"Reloading {name}");
-            load.invoke(name);
+
+            try
+            {
+                load.invoke(name);
+            }
+            catch (Exception e)
+            {
+                currentError = e;
+            }
+            finally
+            {
+                filesToReload.Remove(file);
+            }
         }
-
-        filesToReload.Clear();
-        return;
-
-        string ClearFilePath(string filepath) =>
-            Path.Combine(Path.GetDirectoryName(filepath) ?? string.Empty,
-                Path.GetFileNameWithoutExtension(filepath));
     }
 
     public void Draw(GameTime gameTime)
@@ -212,7 +225,7 @@ public sealed class ClojureEngine : IDisposable
         spriteBatch.End();
     }
 
-    static string GetProjectPath(string path = null)
+    static string GetGameSourcePath(string path = null)
     {
         for (var i = 0; i < 100; i++)
         {

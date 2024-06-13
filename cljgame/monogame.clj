@@ -1,15 +1,14 @@
 (ns cljgame.monogame
-    (:import [System.IO Directory Path]
-             [System.Linq Enumerable]))
+    (:import [System.Linq Enumerable]))
 
-(import [Microsoft.Xna.Framework Game GraphicsDeviceManager Color Vector2 Rectangle GameWindow]
-        [Microsoft.Xna.Framework.Graphics SpriteBatch Texture2D SpriteSortMode SpriteEffects SpriteFont]
+(import [Microsoft.Xna.Framework Color Vector2 Rectangle GameWindow]
+        [Microsoft.Xna.Framework.Graphics Texture2D SpriteSortMode SpriteEffects SpriteFont]
         [Microsoft.Xna.Framework.Input Keyboard Keys]
         [Microsoft.Xna.Framework.Media Song]
         [Microsoft.Xna.Framework.Audio SoundEffect]
         [Microsoft.Xna.Framework.Content ContentManager])
 
-(defn int32 [n] (Convert/ToInt32 n))
+(defn int32 [n] (System.Convert/ToInt32 n))
 (defn get-prop [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))
 
 (def graphics-device (memoize (fn [game] (get-prop game "GraphicsDevice"))))

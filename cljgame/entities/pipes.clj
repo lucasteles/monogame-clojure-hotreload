@@ -75,8 +75,8 @@
     (if pipe
       (do (g/play score-sound)
           (-> state
-              (assoc-in [:pipe-manager :pipes] (map #(if (= % pipe) 
-                                                       (assoc % :counted true) 
+              (assoc-in [:pipe-manager :pipes] (map #(if (= % pipe)
+                                                       (assoc % :counted true)
                                                        %) pipes))
               (update-in [:score :score] inc)))
       state)))

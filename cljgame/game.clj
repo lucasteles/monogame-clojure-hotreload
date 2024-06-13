@@ -57,7 +57,6 @@
              {:keys [floor background pipe-manager bird score] } :state}]
   (g/clear graphics-device :light-gray)
   (g/begin sprite-batch)
-
   (background/draw sprite-batch background)
   (pipes/draw sprite-batch pipe-manager)
   (floor/draw sprite-batch floor)
