@@ -9,7 +9,7 @@
         [Microsoft.Xna.Framework.Audio SoundEffect]
         [Microsoft.Xna.Framework.Content ContentManager])
 
-(defn int32 [n] (Convert/ToInt32 n))
+(defn int32 [n] (System.Convert/ToInt32 n))
 (defn get-prop [obj prop-name] (-> obj .GetType .BaseType (.GetProperty prop-name) (.GetValue obj)))
 
 (def graphics-device (memoize (fn [game] (get-prop game "GraphicsDevice"))))

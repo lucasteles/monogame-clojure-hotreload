@@ -4,22 +4,19 @@
               [cljgame.entities.logo :as logo]
               [cljgame.entities.ball :as ball]
               [cljgame.entities.player :as player]
-              [cljgame.entities.ball :as ball]
               [cljgame.entities.score :as score])
   (:import [System Console]))
-
-(defn game-configuration! [game graphics]
-  (g/set-mouse-visible game true)
-  (g/set-screen-size graphics {:width 1024 :height 768})
-  (g/apply-changes graphics))
 
 (defn exit-on-esc [game]
   (when (-> (g/keyboard-state) (g/is-key-dowm :escape))
         (g/exit game)))
 
 (defn init [game { graphics :graphics-manager
-                         window :window }]
-  (game-configuration! game graphics)
+                   window :window }]
+
+  (g/set-mouse-visible game true)
+  (g/set-screen-size graphics {:width 1024 :height 768})
+  (g/apply-changes graphics)
 
   {:logo (logo/init window)
    :player1 (player/init window :player1 game)
