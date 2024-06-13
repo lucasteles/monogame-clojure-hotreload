@@ -21,10 +21,8 @@ public sealed class Game1 : Game
         base.Initialize();
     }
 
-    protected override void LoadContent()
-    {
+    protected override void LoadContent() =>
         clojureEngine.LoadContent();
-    }
 
     protected override void Update(GameTime gameTime)
     {
